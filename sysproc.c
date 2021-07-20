@@ -20,10 +20,13 @@ sys_exit(void)
   return 0;  // not reached
 }
 
+//edit for lab 1
 int
 sys_wait(void)
 {
-  return wait();
+  int* s;
+  argptr(0, (void*)&s, sizeof(s));
+  return wait(s);
 }
 
 int
@@ -88,4 +91,18 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
+}
+
+// for lab 1
+// reads arugument in int  and calls exit system
+int 
+sys_modEx(void)
+{
+  int exitstatus;
+if(arginint(0,&exitstatus)<0)
+{
+  return -1;
+}
+return modEx(exitstatus);
+
 }
