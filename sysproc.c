@@ -106,3 +106,31 @@ if(arginint(0,&exitstatus)<0)
 return modEx(exitstatus);
 
 }
+
+// adding waitpit for lab 1
+// This system call must act like wait system call with the following additional properties: 
+//The system call must wait for a process (not necessary a child process) with a pid that equals to one provided by the pid argument. 
+//The return value must be the process id of the process that was terminated or -1 if this process does not exist or if an unexpected error occurred.
+
+int 
+sys_waitpid(void) 
+{
+  int pid;
+  int options =0;
+  int* s;
+  
+  if(argint(0,&pid) < 0)
+  {
+    return -1; // return value if procvess does not exist or an error occured.
+  }
+  else if(argptr(1, (void*)&s, sizeof(s)) < 0)
+  {
+    return 0;
+  }
+  else if(argint(2, &options) < 0)
+  {
+    return -1;
+  }
+
+  return waitpid(pid, s, options);
+}
