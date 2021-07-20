@@ -272,7 +272,7 @@ exit(void)
 
 // edit for lab 1 to accept parameter
 int
-wait(void)
+wait(int* s)
 {
   struct proc *p;
   int havekids, pid;
