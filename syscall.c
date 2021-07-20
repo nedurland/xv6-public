@@ -103,8 +103,9 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_modEx(void); // new function prototype for lab 1
-extern int sys_waitpid(void); // new prototype for wait pid
+// lab1
+extern int sys_exitwithstatus(void);
+extern int sys_waitpid(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -128,8 +129,9 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_modEx]   sys_modEx, // added modEX to array of pointers
-[SYS_waitpid] sys_waitpid, //added waitpid to array
+//lab1
+[SYS_exitwithstatus]	sys_exitwithstatus, 
+[SYS_waitpid]	sys_waitpid, 
 };
 
 void

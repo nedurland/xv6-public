@@ -4,7 +4,7 @@ struct rtcdate;
 // system calls
 int fork(void);
 int exit(void) __attribute__((noreturn));
-int wait(int*); //edit for lab 1 so wait can accept a param
+int wait(int*);
 int pipe(int*);
 int write(int, const void*, int);
 int read(int, void*, int);
@@ -23,7 +23,10 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int modEx(int); // for lab 1 for user level 
+
+//lab1
+int exitwithstatus(int);
+int waitpid(int, int*, int);
 
 // ulib.c
 int stat(const char*, struct stat*);

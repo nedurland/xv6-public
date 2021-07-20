@@ -267,12 +267,55 @@ exit(void)
   panic("zombie exit");
 }
 
+// lab 1
+int
+exitwithstatus(int status)
+{
+  struct proc *curproc = myproc();
+  struct proc *p;
+  int fd;
+
+  if(curproc == initproc)
+    panic("init exiting");
+
+  // Close all open files.
+  for(fd = 0; fd < NOFILE; fd++){
+    if(curproc->ofile[fd]){
+      fileclose(curproc->ofile[fd]);
+      curproc->ofile[fd] = 0;
+    }
+  }
+
+  begin_op();
+  iput(curproc->cwd);
+  end_op();
+  curproc->cwd = 0;
+
+  acquire(&ptable.lock);
+
+  // Parent might be sleeping in wait().
+  wakeup1(curproc->parent);
+
+  // Pass abandoned children to init.
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->parent == curproc){
+      p->parent = initproc;
+      if(p->state == ZOMBIE)
+        wakeup1(initproc);
+    }
+  }
+
+  // Jump into the scheduler, never to return.
+  curproc->state = ZOMBIE;
+  curproc->exitstatus = status;
+  sched();
+  panic("zombie exit");
+}
+
 // Wait for a child process to exit and return its pid.
 // Return -1 if this process has no children.
-
-// edit for lab 1 to accept parameter
 int
-wait(int* s)
+wait(int *status)
 {
   struct proc *p;
   int havekids, pid;
@@ -298,11 +341,11 @@ wait(int* s)
         p->killed = 0;
         p->state = UNUSED;
 
-        // we need to modify so that if exit status is not 0 then it stores the process exitstatus in the s variable so implement an if statement
-        // then rested exit status to 0
-        if(s) *s=p->exitstatus;
-        p->exitstatus=0;
+  if(status){
+     *status = p->exitstatus;
+  }
 
+  p->exitstatus = 0;
         release(&ptable.lock);
         return pid;
       }
@@ -310,6 +353,49 @@ wait(int* s)
 
     // No point waiting if we don't have any children.
     if(!havekids || curproc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    // Wait for children to exit.  (See wakeup1 call in proc_exit.)
+    sleep(curproc, &ptable.lock);  //DOC: wait-sleep
+  }
+}
+
+int
+waitpid(int pid, int *status, int options)
+{
+  struct proc *p, *curproc = myproc();
+  int found_process;  
+  acquire(&ptable.lock);
+  for(;;){
+    // Scan through table looking for exited children.
+    found_process = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->pid != pid)
+        continue;
+      found_process = 1;
+      if(p->state == ZOMBIE){
+          if(status){
+            *status = curproc->exitstatus;
+          }
+        // Found one.
+        pid = p->pid;
+        kfree(p->kstack);
+        p->kstack = 0;
+        freevm(p->pgdir);
+        p->pid = 0;
+        p->parent = 0;
+        p->name[0] = 0;
+        p->killed = 0;
+        p->state = UNUSED;
+        release(&ptable.lock);
+        return pid;
+      }
+  }
+
+    // No point waiting if we don't have any children.
+    if(!found_process || curproc->killed){
       release(&ptable.lock);
       return -1;
     }
@@ -539,49 +625,4 @@ procdump(void)
     }
     cprintf("\n");
   }
-}
-
-//for lab 1, defining modEx to store the exit status. going to implement current exit code.
-int
-modEx(int s)
-{
-  struct proc *curproc = myproc();
-  struct proc *p;
-  int fd;
-
-  if(curproc == initproc)
-    panic("init exiting");
-
-  // Close all open files.
-  for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd]){
-      fileclose(curproc->ofile[fd]);
-      curproc->ofile[fd] = 0;
-    }
-  }
-
-  begin_op();
-  iput(curproc->cwd);
-  end_op();
-  curproc->cwd = 0;
-
-  acquire(&ptable.lock);
-
-  // Parent might be sleeping in wait().
-  wakeup1(curproc->parent);
-
-  // Pass abandoned children to init.
-  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-    if(p->parent == curproc){
-      p->parent = initproc;
-      if(p->state == ZOMBIE)
-        wakeup1(initproc);
-    }
-  }
-
-  // Jump into the scheduler, never to return.
-  curproc->state = ZOMBIE;
-  curproc->exitstatus=s; // added code to take the argument of 's' into modEx
-  sched();
-  panic("zombie exit");
 }
