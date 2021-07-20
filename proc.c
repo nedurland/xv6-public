@@ -297,6 +297,12 @@ wait(int* s)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+
+        // we need to modify so that if exit status is not 0 then it stores the process exitstatus in the s variable so implement an if statement
+        // then rested exit status to 0
+        if(s) *s=p->exitstatus;
+        p->exitstatus=0;
+
         release(&ptable.lock);
         return pid;
       }
