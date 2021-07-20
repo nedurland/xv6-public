@@ -21,3 +21,4 @@
 #define SYS_mkdir  20
 #define SYS_close  21
 #define SYS_modEx  22 // new systemcall for exit lab1
+#define SYS_waitpid 23 // new system call for waitpid for lab 1
